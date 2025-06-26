@@ -14,9 +14,13 @@ export default function RootLayout() {
 
   useEffect(() => {
     return onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        return;
+      }
+
       setUser(currentUser);
       setReady(true);
-      await SplashScreen.hideAsync(); // hide splash once auth is known
+      await SplashScreen.hideAsync();
     });
   }, []);
 
