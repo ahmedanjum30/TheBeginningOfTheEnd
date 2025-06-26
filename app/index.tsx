@@ -12,7 +12,6 @@ const Index = () => {
         className="bg-blue-500 p-3 rounded-lg"
       >
         <Text className="text-white font-bold">Sign In</Text>
-        <Text>{process.env.FIREBASE_APP_ID}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
