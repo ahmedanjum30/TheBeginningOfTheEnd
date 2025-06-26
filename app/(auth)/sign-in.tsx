@@ -4,12 +4,7 @@ import { auth } from '../../src/firebase';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-
-const schema = yup.object().shape({
-  email: yup.string().email('Invalid email').required('Email is required'),
-  password: yup.string().min(6, 'Min 6 chars').required('Password is required'),
-});
+import { signInSchema } from '@/validations/(auth)/sign-in';
 
 export default function SignIn() {
   const router = useRouter();
@@ -17,13 +12,20 @@ export default function SignIn() {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm({ resolver: yupResolver(schema) });
+  } = useForm({ resolver: yupResolver(signInSchema) });
 
-  const onSubmit = async ({ email, password }) => {
+  const onSubmit = async ({
+    email,
+    password,
+  }: {
+    email: string;
+    password: string;
+  }) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
-      alert(err.message || 'Error signing in');
+      const error = err as Error;
+      alert(error.message || 'Error signing in');
     }
   };
 
@@ -87,7 +89,7 @@ export default function SignIn() {
 
       <TouchableOpacity onPress={() => router.push('/(auth)/sign-up')}>
         <Text className="text-center text-blue-500 mt-2">
-          Don't have an account? Sign up
+          Don&apos;t have an account? Sign up
         </Text>
       </TouchableOpacity>
     </View>

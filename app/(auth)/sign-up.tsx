@@ -4,12 +4,7 @@ import { auth } from '../../src/firebase';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-
-const schema = yup.object().shape({
-  email: yup.string().email('Invalid email').required('Email is required'),
-  password: yup.string().min(6, 'Min 6 chars').required('Password is required'),
-});
+import { signUpSchema } from '@/validations/(auth)/sign-up';
 
 export default function SignUp() {
   const router = useRouter();
@@ -17,13 +12,20 @@ export default function SignUp() {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm({ resolver: yupResolver(schema) });
+  } = useForm({ resolver: yupResolver(signUpSchema) });
 
-  const onSubmit = async ({ email, password }) => {
+  const onSubmit = async ({
+    email,
+    password,
+  }: {
+    email: string;
+    password: string;
+  }) => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
     } catch (err) {
-      alert(err.message || 'Error signing up');
+      const error = err as Error;
+      alert(error.message || 'Error signing up');
     }
   };
 
