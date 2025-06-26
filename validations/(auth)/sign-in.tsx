@@ -4,9 +4,11 @@ export const signInSchema = yup.object().shape({
   email: yup
     .string()
     .email('Please enter a valid email')
-    .required('Email is required'),
+    .required('Email is required')
+    .default(''),
   password: yup
     .string()
     .min(6, 'Password must be at least 6 characters')
-    .required('Password is required'),
+    .required('Password is required')
+    .default(''),
 });

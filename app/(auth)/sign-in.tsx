@@ -12,7 +12,10 @@ export default function SignIn() {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm({ resolver: yupResolver(signInSchema) });
+  } = useForm({
+    resolver: yupResolver(signInSchema),
+    defaultValues: signInSchema.cast({}),
+  });
 
   const onSubmit = async ({
     email,
@@ -23,6 +26,7 @@ export default function SignIn() {
   }) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      router.replace('/(main)');
     } catch (err) {
       const error = err as Error;
       alert(error.message || 'Error signing in');
