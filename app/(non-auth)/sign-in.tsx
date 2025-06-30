@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { signInSchema } from '@/validations/(auth)/sign-in';
+import { signInSchema } from '@/validations/(non-auth)/sign-in';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 
@@ -126,7 +126,7 @@ export default function SignIn() {
 
         {/* Sign Up Link */}
         <TouchableOpacity
-          onPress={() => router.push('/(auth)/sign-up')}
+          onPress={() => router.push('/(non-auth)/sign-up')}
           className="hover:scale-105 transition-transform"
         >
           <Text className="text-center text-white underline mt-2 hover:text-blue-200">

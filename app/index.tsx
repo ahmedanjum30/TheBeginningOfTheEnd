@@ -12,7 +12,7 @@ export default function Index() {
       if (user) {
         router.replace('/(main)');
       } else {
-        router.replace('/(auth)/sign-in');
+        router.replace('/(non-auth)/sign-in');
       }
 
       await SplashScreen.hideAsync();
