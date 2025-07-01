@@ -207,7 +207,7 @@ export default function Customers() {
         placeholder="Search by name, email, or phone"
         value={search}
         onChangeText={setSearch}
-        className="mb-4 px-4 py-3 rounded bg-gray-100"
+        className="mb-4 px-4 py-3 rounded bg-gray-100 border border-blue-200"
         autoCapitalize="none"
         autoCorrect={false}
         clearButtonMode="while-editing"
