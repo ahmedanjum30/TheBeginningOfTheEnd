@@ -21,6 +21,7 @@ const nameField = yup.string().required('Name is required').default('');
 export const customerSchema = yup.object().shape({
   cnic: cnicField,
   name: nameField,
+  email: emailField,
   phone: phoneField,
   policeVerification: yup.boolean().required().default(false),
 

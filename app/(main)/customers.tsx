@@ -26,6 +26,7 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import { firestore } from '@/src/firebase';
+import { TextInput as RNTextInput } from 'react-native';
 
 // Firestore collection name
 const CUSTOMERS_COLLECTION = 'customers';
@@ -56,6 +57,7 @@ export default function Customers() {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerForm | null>(
     null,
   );
+  const [search, setSearch] = useState('');
 
   const {
     control,
@@ -64,7 +66,7 @@ export default function Customers() {
     formState: { errors },
   } = useForm<CustomerForm>({
     resolver: yupResolver(customerSchema),
-    defaultValues: customerSchema.cast({}),
+    defaultValues: customerSchema.cast({}) as CustomerForm,
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -161,11 +163,31 @@ export default function Customers() {
     reset(customerSchema.cast({}));
   };
 
+  // Filter customers by search
+  const filteredCustomers = customers.filter((cust) => {
+    const q = search.toLowerCase();
+    return (
+      cust.name.toLowerCase().includes(q) ||
+      cust.email.toLowerCase().includes(q) ||
+      cust.phone.toLowerCase().includes(q)
+    );
+  });
+
   // --- UI ---
   return (
     <View className="flex-1 bg-white px-4 py-6">
       <Text className="text-3xl font-bold mb-6 text-center">Customers</Text>
       {error && <Text className="text-red-600 text-center mb-2">{error}</Text>}
+      {/* Search Field */}
+      <RNTextInput
+        placeholder="Search by name, email, or phone"
+        value={search}
+        onChangeText={setSearch}
+        className="mb-4 px-4 py-3 rounded bg-gray-100"
+        autoCapitalize="none"
+        autoCorrect={false}
+        clearButtonMode="while-editing"
+      />
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#0a7ea4" />
@@ -193,7 +215,7 @@ export default function Customers() {
             </Text>
           )}
           <ScrollView className="mt-6">
-            {customers.map((cust) => (
+            {filteredCustomers.map((cust) => (
               <Pressable
                 key={cust.id}
                 onPress={() => setSelectedCustomer(cust)}
