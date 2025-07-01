@@ -13,6 +13,7 @@ import {
   Modal,
   Pressable,
   Platform,
+  FlatList,
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import {
@@ -21,12 +22,15 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  onSnapshot,
+  getDocs,
   query,
   orderBy,
+  limit,
+  startAfter,
 } from 'firebase/firestore';
 import { firestore } from '@/src/firebase';
 import { TextInput as RNTextInput } from 'react-native';
+import type { QueryDocumentSnapshot } from 'firebase/firestore';
 
 // Firestore collection name
 const CUSTOMERS_COLLECTION = 'customers';
@@ -50,6 +54,9 @@ type CustomerForm = {
 
 export default function Customers() {
   const [customers, setCustomers] = useState<CustomerForm[]>([]);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [editing, setEditing] = useState<CustomerForm | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -74,31 +81,48 @@ export default function Customers() {
     name: 'guaranters',
   });
 
-  // Real-time Firestore listener
+  // Pagination: fetch first page on mount
   useEffect(() => {
-    setLoading(true);
-    const q = query(
-      collection(firestore, CUSTOMERS_COLLECTION),
-      orderBy('name'),
-    );
-    const unsub = onSnapshot(
-      q,
-      (snapshot) => {
-        setCustomers(
-          snapshot.docs.map(
-            (doc) => ({ id: doc.id, ...doc.data() }) as CustomerForm,
-          ),
-        );
-        setLoading(false);
-      },
-      (err) => {
-        console.log(err.message);
-        setError('Failed to load customers');
-        setLoading(false);
-      },
-    );
-    return () => unsub();
+    fetchCustomers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const fetchCustomers = async (nextPage = false) => {
+    if (loading || loadingMore || (!hasMore && nextPage)) return;
+    if (nextPage) setLoadingMore(true);
+    else setLoading(true);
+    try {
+      let q = query(
+        collection(firestore, CUSTOMERS_COLLECTION),
+        orderBy('name'),
+        limit(10),
+      );
+      if (nextPage && lastDoc) {
+        q = query(
+          collection(firestore, CUSTOMERS_COLLECTION),
+          orderBy('name'),
+          startAfter(lastDoc),
+          limit(10),
+        );
+      }
+      const snap = await getDocs(q);
+      const newCustomers = snap.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() }) as CustomerForm,
+      );
+      if (nextPage) {
+        setCustomers((prev) => [...prev, ...newCustomers]);
+      } else {
+        setCustomers(newCustomers);
+      }
+      setLastDoc(snap.docs[snap.docs.length - 1]);
+      setHasMore(snap.docs.length === 10);
+    } catch {
+      setError('Failed to load customers');
+    } finally {
+      if (nextPage) setLoadingMore(false);
+      else setLoading(false);
+    }
+  };
 
   const onSubmit = async (data: CustomerForm) => {
     setError(null);
@@ -214,10 +238,12 @@ export default function Customers() {
               No customers yet.
             </Text>
           )}
-          <ScrollView className="mt-6">
-            {filteredCustomers.map((cust) => (
+          <FlatList
+            className="mt-6"
+            data={filteredCustomers}
+            keyExtractor={(item) => item.id!}
+            renderItem={({ item: cust }) => (
               <Pressable
-                key={cust.id}
                 onPress={() => setSelectedCustomer(cust)}
                 className="mb-4"
               >
@@ -238,8 +264,18 @@ export default function Customers() {
                   )}
                 </View>
               </Pressable>
-            ))}
-          </ScrollView>
+            )}
+            onEndReached={() => {
+              if (hasMore && !loadingMore && search === '')
+                fetchCustomers(true);
+            }}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={
+              loadingMore ? (
+                <ActivityIndicator size="small" color="#0a7ea4" />
+              ) : null
+            }
+          />
         </>
       )}
       {/* Add/Edit Modal */}
