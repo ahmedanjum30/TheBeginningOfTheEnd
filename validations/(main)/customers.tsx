@@ -9,20 +9,18 @@ const cnicField = yup
   .length(13, 'CNIC must be exactly 13 digits')
   .matches(/^\d+$/, 'CNIC must contain only digits')
   .default('');
-
 const phoneField = yup
   .string()
   .required('Phone is required')
   .matches(PHONE_REGEX, 'Enter a valid phone number')
   .default('');
-
 const emailField = yup.string().email('Invalid email').optional().default('');
+const nameField = yup.string().required('Name is required').default('');
 
 // Main schema
 export const customerSchema = yup.object().shape({
   cnic: cnicField,
-  name: yup.string().required('Name is required').default(''),
-  email: emailField,
+  name: nameField,
   phone: phoneField,
   policeVerification: yup.boolean().required().default(false),
 
@@ -30,10 +28,10 @@ export const customerSchema = yup.object().shape({
     .array()
     .of(
       yup.object().shape({
-        name: yup.string().required('Guaranter name is required').default(''),
+        name: nameField,
         email: emailField,
         cnic: cnicField,
-        phone: phoneField.required('Guaranter phone is required'),
+        phone: phoneField,
       }),
     )
     .default([]),
