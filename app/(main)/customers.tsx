@@ -1,4 +1,4 @@
-import React, { useForm, Controller } from 'react-hook-form';
+import React, { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { customerSchema } from '@/validations/(main)/customers';
 import {
@@ -28,6 +28,13 @@ import { firestore } from '@/src/firebase';
 // Firestore collection name
 const CUSTOMERS_COLLECTION = 'customers';
 
+type Guaranter = {
+  name: string;
+  email: string;
+  cnic: string;
+  phone: string;
+};
+
 type CustomerForm = {
   id?: string;
   cnic: string;
@@ -35,13 +42,14 @@ type CustomerForm = {
   email: string;
   phone: string;
   policeVerification: boolean;
+  guaranters: Guaranter[];
 };
 
 export default function Customers() {
   const [customers, setCustomers] = useState<CustomerForm[]>([]);
   const [editing, setEditing] = useState<CustomerForm | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const {
@@ -52,6 +60,11 @@ export default function Customers() {
   } = useForm<CustomerForm>({
     resolver: yupResolver(customerSchema),
     defaultValues: customerSchema.cast({}),
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'guaranters',
   });
 
   // Real-time Firestore listener
@@ -72,6 +85,7 @@ export default function Customers() {
         setLoading(false);
       },
       (err) => {
+        console.log(err.message);
         setError('Failed to load customers');
         setLoading(false);
       },
@@ -143,7 +157,14 @@ export default function Customers() {
             onPress={() => {
               setShowForm(true);
               setEditing(null);
-              reset(customerSchema.cast({}));
+              reset({
+                cnic: '',
+                name: '',
+                email: '',
+                phone: '',
+                policeVerification: false,
+                guaranters: [],
+              });
             }}
           />
           {customers.length === 0 && (
@@ -183,7 +204,12 @@ export default function Customers() {
         </>
       )}
       {/* Add/Edit Modal */}
-      <Modal visible={showForm} animationType="slide" transparent>
+      <Modal
+        visible={showForm}
+        animationType="slide"
+        transparent
+        className="m-height-[80dvh] overflow-y-auto"
+      >
         <View className="flex-1 justify-center items-center bg-black/40 px-4">
           <View className="w-full max-w-md bg-white rounded-2xl p-8 shadow-lg">
             <Text className="text-2xl font-bold mb-4 text-center">
@@ -281,6 +307,82 @@ export default function Customers() {
                   <Switch value={value} onValueChange={onChange} />
                 </View>
               )}
+            />
+            {/* Guaranters Section */}
+            <Text className="text-lg font-semibold mb-2 mt-4">Guaranters</Text>
+            {fields.map((field, idx) => (
+              <View
+                key={field.id}
+                className="mb-4 p-3 rounded bg-gray-50 border border-gray-200"
+              >
+                <Text className="font-semibold mb-2">Guaranter #{idx + 1}</Text>
+                <Controller
+                  control={control}
+                  name={`guaranters.${idx}.name`}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                      placeholder="Name"
+                      className="bg-gray-100 rounded px-4 py-2 mb-2"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name={`guaranters.${idx}.email`}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                      placeholder="Email (optional)"
+                      className="bg-gray-100 rounded px-4 py-2 mb-2"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name={`guaranters.${idx}.cnic`}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                      placeholder="CNIC"
+                      className="bg-gray-100 rounded px-4 py-2 mb-2"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name={`guaranters.${idx}.phone`}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                      placeholder="Phone"
+                      className="bg-gray-100 rounded px-4 py-2 mb-2"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      keyboardType="phone-pad"
+                    />
+                  )}
+                />
+                <Button
+                  title="Remove"
+                  color="#dc2626"
+                  onPress={() => remove(idx)}
+                />
+              </View>
+            ))}
+            <Button
+              title="Add Guaranter"
+              onPress={() =>
+                append({ name: '', email: '', cnic: '', phone: '' })
+              }
             />
             <View className="flex-row gap-2 justify-center mt-2">
               <Button

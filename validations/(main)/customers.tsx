@@ -12,4 +12,19 @@ export const customerSchema = yup.object().shape({
     .matches(PHONE_REGEX, 'Enter a valid phone number')
     .default(''),
   policeVerification: yup.boolean().required().default(false),
+  guaranters: yup
+    .array()
+    .of(
+      yup.object().shape({
+        name: yup.string().required('Guaranter name is required').default(''),
+        email: yup.string().email('Invalid email').optional().default(''),
+        cnic: yup.string().required('Guaranter CNIC is required').default(''),
+        phone: yup
+          .string()
+          .required('Guaranter phone is required')
+          .matches(PHONE_REGEX, 'Enter a valid phone number')
+          .default(''),
+      }),
+    )
+    .default([]),
 });
