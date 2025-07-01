@@ -11,6 +11,7 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
+  Pressable,
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import {
@@ -51,6 +52,9 @@ export default function Customers() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerForm | null>(
+    null,
+  );
 
   const {
     control,
@@ -174,31 +178,29 @@ export default function Customers() {
           )}
           <ScrollView className="mt-6">
             {customers.map((cust) => (
-              <View
+              <Pressable
                 key={cust.id}
-                className="mb-4 p-4 rounded-xl bg-white shadow border border-gray-100"
-                style={{ elevation: 2 }}
+                onPress={() => setSelectedCustomer(cust)}
+                className="mb-4"
               >
-                <Text className="font-semibold text-lg mb-1">{cust.name}</Text>
-                <Text className="text-gray-700">CNIC: {cust.cnic}</Text>
-                <Text className="text-gray-700">Phone: {cust.phone}</Text>
-                {cust.email ? (
-                  <Text className="text-gray-700">Email: {cust.email}</Text>
-                ) : null}
-                <Text className="text-gray-700">
-                  Police Verification: {cust.policeVerification ? 'Yes' : 'No'}
-                </Text>
-                <View className="flex-row mt-3 gap-2">
-                  <Button title="Edit" onPress={() => onEdit(cust)} />
-                  <Button
-                    title="Delete"
-                    color="#dc2626"
-                    onPress={() => onDelete(cust.id!)}
-                  />
-                  {/* Details button for show page (to be implemented) */}
-                  {/* <Button title="Details" onPress={() => router.push(`/customers/${cust.id}` as Href)} /> */}
+                <View
+                  className="p-4 rounded-xl bg-white shadow border border-gray-100"
+                  style={{ elevation: 2 }}
+                >
+                  <Text className="font-semibold text-lg mb-1">
+                    {cust.name}
+                  </Text>
+                  <Text className="text-gray-700 mb-1">
+                    Phone: {cust.phone}
+                  </Text>
+                  {cust.guaranters && cust.guaranters.length > 0 && (
+                    <Text className="text-gray-600 mb-2">
+                      Guaranters:{' '}
+                      {cust.guaranters.map((g: Guaranter) => g.name).join(', ')}
+                    </Text>
+                  )}
                 </View>
-              </View>
+              </Pressable>
             ))}
           </ScrollView>
         </>
@@ -392,6 +394,72 @@ export default function Customers() {
               <Button title="Cancel" color="#64748b" onPress={onCancel} />
             </View>
           </View>
+        </View>
+      </Modal>
+      {/* Customer Details Modal */}
+      <Modal
+        visible={!!selectedCustomer}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setSelectedCustomer(null)}
+      >
+        <View className="flex-1 bg-white px-4 py-6">
+          {selectedCustomer && (
+            <ScrollView>
+              <Text className="text-3xl font-bold mb-4 text-center">
+                Customer Details
+              </Text>
+              <Text className="text-lg font-semibold mb-2">
+                {selectedCustomer.name}
+              </Text>
+              <Text className="mb-1">CNIC: {selectedCustomer.cnic}</Text>
+              <Text className="mb-1">Phone: {selectedCustomer.phone}</Text>
+              {selectedCustomer.email && (
+                <Text className="mb-1">Email: {selectedCustomer.email}</Text>
+              )}
+              <Text className="mb-1">
+                Police Verification:{' '}
+                {selectedCustomer.policeVerification ? 'Yes' : 'No'}
+              </Text>
+              <Text className="text-lg font-semibold mt-4 mb-2">
+                Guaranters
+              </Text>
+              {selectedCustomer.guaranters &&
+              selectedCustomer.guaranters.length > 0 ? (
+                selectedCustomer.guaranters.map((g, idx) => (
+                  <View
+                    key={idx}
+                    className="mb-3 p-3 rounded bg-gray-50 border border-gray-200"
+                  >
+                    <Text className="font-semibold">{g.name}</Text>
+                    <Text>CNIC: {g.cnic}</Text>
+                    <Text>Phone: {g.phone}</Text>
+                    {g.email && <Text>Email: {g.email}</Text>}
+                  </View>
+                ))
+              ) : (
+                <Text className="text-gray-500">No guaranters</Text>
+              )}
+              <View className="flex-row gap-2 justify-center mt-4">
+                <Button
+                  title="Edit"
+                  onPress={() => {
+                    onEdit(selectedCustomer);
+                    setSelectedCustomer(null);
+                  }}
+                />
+                <Button
+                  title="Delete"
+                  color="#dc2626"
+                  onPress={() => {
+                    onDelete(selectedCustomer.id!);
+                    setSelectedCustomer(null);
+                  }}
+                />
+              </View>
+            </ScrollView>
+          )}
+          <Button title="Close" onPress={() => setSelectedCustomer(null)} />
         </View>
       </Modal>
     </View>
